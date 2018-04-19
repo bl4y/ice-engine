@@ -1,0 +1,32 @@
+{
+  "name": "ice-engine",
+  "version": "0.0.1",
+  "description": "ultra-high performance xml parser written in typescript",
+  "main": "dist/ice-engine.umd.js",
+  "module": "dist/ice-engine.es.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && rollup -c rollup.config.js",
+    "example": "ts-node --project experimental/tsconfig.json experimental/app.ts"
+  },
+  "repository": "https://github.com/bl4y/ice-engine",
+  "keywords": [
+    "ice",
+    "engine",
+    "framework",
+    "markup",
+    "language",
+    "xml",
+    "parser",
+    "typescript"
+  ],
+  "author": "bl4y",
+  "license": "MIT",
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "rollup": "^0.57.1",
+    "rollup-plugin-typescript2": "^0.12.0",
+    "typescript": "^2.8.1",
+    "ts-node": "^6.0.0"
+  }
+}
