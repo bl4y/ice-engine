@@ -1,11 +1,5 @@
 import * as CHAR from './chars';
-
-export type Node = string | [string, NodeProperty];
-
-export interface NodeProperty {
-  _attr: [string, string][];
-  _children: Node[];
-}
+import { Node, NodeAttribute } from './node';
 
 export class TreeBuilder {
   private position = -1;
@@ -76,6 +70,8 @@ export class TreeBuilder {
           } else {
             this.processDoctype();
           }
+        } else if (this.checkAndPeek(CHAR.QUESTION_MARK)) {
+          this.processProlog();
         } else if (this.checkAndPeek(CHAR.SLASH)) {
           this.processTagClose();
         } else {
@@ -88,28 +84,54 @@ export class TreeBuilder {
     return this.rootNodeSet;
   }
 
-  processTagOpen() {
+  processProlog() {
     this.peekUntil(CHAR.isWhitespace);
     const name = this.processName();
-    const nodeProperty: NodeProperty = {
+    const node: Node = {
+      _type: 'prolog',
+      _value: name,
       _attr: [],
-      _children: []
+      _children: undefined
     };
-    //console.log('tag open: ' + name);
     this.peekUntil(CHAR.isWhitespace);
-    while (!CHAR.isTagEnd(this.current)) {
+    while (!this.checkCharsAndPeek('?>')) {
       const attributeName = this.processName();
-      //console.log('attr name: ' + attributeName);
       this.peekUntil(CHAR.isWhitespace);
       if (this.checkAndPeek(CHAR.EQUALS)) {
         this.peekUntil(CHAR.isWhitespace);
-        const attributeValue = this.processValue();
-        //console.log('attr value: ' + attributeValue);
-        nodeProperty._attr.push([attributeName, attributeValue]);
+        node._attr.push({
+          _name: attributeName,
+          _value: this.processValue()
+        });
       }
       this.peekUntil(CHAR.isWhitespace);
     }
-    this.addTupleNode(name, nodeProperty);
+    this.addNode(node);
+  }
+
+  processTagOpen() {
+    this.peekUntil(CHAR.isWhitespace);
+    const name = this.processName();
+    const node: Node = {
+      _type: 'element',
+      _value: name,
+      _attr: [],
+      _children: []
+    };
+    this.peekUntil(CHAR.isWhitespace);
+    while (!CHAR.isTagEnd(this.current)) {
+      const attributeName = this.processName();
+      this.peekUntil(CHAR.isWhitespace);
+      if (this.checkAndPeek(CHAR.EQUALS)) {
+        this.peekUntil(CHAR.isWhitespace);
+        node._attr.push({
+          _name: attributeName,
+          _value: this.processValue()
+        });
+      }
+      this.peekUntil(CHAR.isWhitespace);
+    }
+    this.addNode(node);
     if (this.checkAndPeek(CHAR.SLASH)) {
       this.jumpToParentNode();
     }
@@ -119,7 +141,6 @@ export class TreeBuilder {
   processTagClose() {
     this.peekUntil(CHAR.isWhitespace);
     const name = this.processName();
-    //console.log('tag close: ' + name);
     this.peekUntil(CHAR.isWhitespace);
     this.requireAndPeek(CHAR.GREATER_THAN);
     this.jumpToParentNode();
@@ -128,15 +149,23 @@ export class TreeBuilder {
   processComment() {
     this.requireAndPeek(CHAR.MINUS);
     const comment = this.processTextUntilPredicate(code => !this.checkCharsAndPeek('-->'));
-    //console.log('comment: ' + comment);
-    this.addTextNode('<!--' + comment + '-->');
+    this.addNode({
+      _type: 'comment',
+      _attr: undefined,
+      _children: undefined,
+      _value: comment
+    });
   }
 
   processCdata() {
     this.requireCharsAndPeek('CDATA[');
-    const cdata = this.processTextUntilPredicate(code => !this.checkCharsAndPeek(']>'));
-    //console.log('cdata: ' + cdata);
-    this.addTextNode('<!CDATA[' + cdata + ']>');
+    const cdata = this.processTextUntilPredicate(code => !this.checkCharsAndPeek(']]>'));
+    this.addNode({
+      _type: 'cdata',
+      _attr: undefined,
+      _children: undefined,
+      _value: cdata
+    });
   }
 
   processDoctype() {
@@ -157,13 +186,13 @@ export class TreeBuilder {
     if (this.current === CHAR.DOUBLE_QUOTES || this.current === CHAR.SINGLE_QUOTE) {
       const quoteCode = this.current;
       this.peek();
-      let value = '';
+      let value = [];
       while (this.current !== quoteCode) {
-        value += String.fromCharCode(this.current);
+        value.push(String.fromCharCode(this.current));
         this.peek();
       }
       this.peek();
-      return value;
+      return value.join('');
     }
     this.peekUntil(CHAR.isName);
     return this.source.substring(start, this.current);
@@ -171,30 +200,32 @@ export class TreeBuilder {
 
   processText() {
     const text = this.processTextUntilPredicate(code => code !== CHAR.LESSER_THAN && code !== CHAR.NUL);
-    this.addTextNode(text);
-    //console.log('text: ' + text);
+    this.addNode({
+      _type: 'text',
+      _attr: undefined,
+      _children: undefined,
+      _value: text
+    });
   }
 
   processTextUntilPredicate(predicate: (code: number) => boolean): string {
-    let value = '';
+    let value = [];
     do {
-      value += String.fromCharCode(this.current);
+      value.push(String.fromCharCode(this.current));
       this.peek();
     } while (predicate(this.current));
-    return value;
+    return value.join('');
   }
 
-  addTupleNode(name: string, nodeProperty: NodeProperty) {
-    this.currentNodeSet.push([name, nodeProperty]);
-    this.nodeStack.push(this.currentNodeSet);
-    this.currentNodeSet = nodeProperty._children;
+  addNode(node: Node) {
+    this.currentNodeSet.push(node);
+    if (node._children) {
+      this.nodeStack.push(this.currentNodeSet);
+      this.currentNodeSet = node._children;
+    }
   }
 
   jumpToParentNode() {
     this.currentNodeSet = this.nodeStack.pop();
-  }
-
-  addTextNode(text: string) {
-    this.currentNodeSet.push(text);
   }
 }

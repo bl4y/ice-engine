@@ -18,6 +18,7 @@ export const COLON = 58;
 export const LESSER_THAN = 60;
 export const EQUALS = 61;
 export const GREATER_THAN = 62;
+export const QUESTION_MARK = 63;
 
 export const LETTER_A = 65;
 export const LETTER_Z = 90;
