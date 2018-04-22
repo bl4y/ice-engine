@@ -18,6 +18,9 @@ export class TreeBuilder {
   }
 
   peek(times: number = 1) {
+    if (this.position >= this.source.length) {
+      throw new Error('Unexpected end of file.');
+    }
     this.position += times;
     this.current = this.position >= this.source.length ? CHAR.NUL : this.source.charCodeAt(this.position);
   }
@@ -37,6 +40,9 @@ export class TreeBuilder {
   }
 
   checkCharsAndPeek(chars: string): boolean {
+    if (this.position + chars.length > this.source.length) {
+      throw new Error('Unexpected end of file.');
+    }
     if (this.source.startsWith(chars, this.position)) {
       this.peek(chars.length);
       return true;
@@ -199,13 +205,15 @@ export class TreeBuilder {
   }
 
   processText() {
-    const text = this.processTextUntilPredicate(code => code !== CHAR.LESSER_THAN && code !== CHAR.NUL);
-    this.addNode({
-      _type: 'text',
-      _attr: undefined,
-      _children: undefined,
-      _value: text
-    });
+    const text = this.processPureTextUntilPredicate(code => code !== CHAR.LESSER_THAN && code !== CHAR.NUL);
+    if (text.length > 0) {
+      this.addNode({
+        _type: 'text',
+        _attr: undefined,
+        _children: undefined,
+        _value: text
+      });
+    }
   }
 
   processTextUntilPredicate(predicate: (code: number) => boolean): string {
@@ -215,6 +223,19 @@ export class TreeBuilder {
       this.peek();
     } while (predicate(this.current));
     return value.join('');
+  }
+
+  processPureTextUntilPredicate(predicate: (code: number) => boolean): string {
+    let value = [];
+    let pure = false;
+    do {
+      if (!CHAR.isWhitespace(this.current)) {
+        pure = true;
+      }
+      value.push(String.fromCharCode(this.current));
+      this.peek();
+    } while (predicate(this.current));
+    return pure ? value.join('') : '';
   }
 
   addNode(node: Node) {
