@@ -1,7 +1,7 @@
 {
   "name": "ice-engine",
   "version": "0.0.3",
-  "description": "ultra-high performance xml parser written in typescript",
+  "description": "ultra high performance xml parser written in typescript",
   "main": "dist/ice-engine.umd.js",
   "module": "dist/ice-engine.es.js",
   "typings": "dist/index.d.ts",
@@ -13,7 +13,7 @@
   "keywords": [
     "ice",
     "engine",
-    "framework",
+    "library",
     "markup",
     "language",
     "xml",

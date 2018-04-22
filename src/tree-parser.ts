@@ -10,9 +10,9 @@ export class TreeParser {
   }
 
   process(): string {
-    const pureChildren = this.rootNodeSet.filter(child => child._type !== 'element').length === 0;
+    const onlyElementChildrenNodes = this.rootNodeSet.filter(child => child._type !== 'element').length === 0;
     for (let node of this.rootNodeSet) {
-      this.visit(node, 0, pureChildren);
+      this.visit(node, 0, onlyElementChildrenNodes);
     }
     return this.output.join('');
   }
@@ -50,7 +50,7 @@ export class TreeParser {
         if (node._attr.length > 0) {
           this.output.push(' ', this.processAttributes(node));
         }
-        this.output.push('?>');
+        this.output.push('?>', '\n');
         break;
       case 'text':
         this.output.push(node._value);
