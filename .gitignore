@@ -65,3 +65,6 @@ experimental
 
 # rollup cache
 .rpt2_cache
+
+# Visual Studio Code
+.vscode
