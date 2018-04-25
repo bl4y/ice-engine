@@ -1,6 +1,6 @@
 {
   "name": "ice-engine",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "description": "ultra high performance xml parser written in typescript",
   "main": "dist/ice-engine.umd.js",
   "module": "dist/ice-engine.es.js",
@@ -10,7 +10,7 @@
     "yarn": ">=1.3.2"
   },
   "files": [
-    "dist/**/*"
+    "dist/**"
   ],
   "scripts": {
     "build": "rimraf dist && rollup -c rollup.config.js",
