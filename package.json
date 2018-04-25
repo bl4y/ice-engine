@@ -1,6 +1,6 @@
 {
   "name": "ice-engine",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "ultra high performance xml parser written in typescript",
   "main": "dist/ice-engine.umd.js",
   "module": "dist/ice-engine.es.js",
